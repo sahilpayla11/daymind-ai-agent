@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DayMind — AI Productivity Agent</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #07071a;
+    --bg2: #0e0e2c;
+    --card: rgba(255,255,255,0.04);
+    --border: rgba(255,255,255,0.08);
+    --accent: #7c3aed;
+    --accent2: #a78bfa;
+    --accent3: #06b6d4;
+    --high: #f43f5e;
+    --med: #f59e0b;
+    --low: #10b981;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --glass: rgba(124,58,237,0.08);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated Background Orbs */
+  .bg-orbs {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  }
+  .orb {
+    position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.15;
+    animation: float 8s ease-in-out infinite;
+  }
+  .orb1 { width:400px;height:400px;background:#7c3aed;top:-100px;left:-100px; }
+  .orb2 { width:300px;height:300px;background:#06b6d4;bottom:-50px;right:-50px;animation-delay:3s; }
+  .orb3 { width:200px;height:200px;background:#f43f5e;top:50%;left:50%;animation-delay:5s; }
+  @keyframes float {
+    0%,100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-30px) scale(1.05); }
+  }
+
+  .wrapper { position:relative;z-index:1;max-width:900px;margin:0 auto;padding:2rem 1.5rem; }
+
+  header { text-align:center; padding: 3rem 0 2rem; }
+  .logo { display:flex;align-items:center;justify-content:center;gap:0.75rem;margin-bottom:1rem; }
+  .logo-icon {
+    width:48px;height:48px;border-radius:14px;
+    background: linear-gradient(135deg,#7c3aed,#06b6d4);
+    display:flex;align-items:center;justify-content:center;font-size:1.5rem;
+    box-shadow: 0 0 30px rgba(124,58,237,0.4);
+  }
+  .logo-text { font-size:1.75rem;font-weight:800;letter-spacing:-0.5px; }
+  .logo-text span { background:linear-gradient(90deg,#a78bfa,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent; }
+  header p { color:var(--muted);font-size:1rem;max-width:500px;margin:0 auto; }
+
+  .badge {
+    display:inline-flex;align-items:center;gap:0.4rem;
+    background:var(--glass);border:1px solid rgba(124,58,237,0.3);
+    border-radius:99px;padding:0.3rem 0.9rem;font-size:0.75rem;color:var(--accent2);
+    margin-bottom:1rem;
+  }
+  .badge::before { content:'●';color:var(--low);animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+
+  .input-card {
+    background:var(--card);border:1px solid var(--border);border-radius:20px;
+    padding:2rem;backdrop-filter:blur(20px);margin-bottom:1.5rem;
+  }
+  .input-card h2 { font-size:1.1rem;font-weight:600;margin-bottom:1.5rem;color:var(--accent2); }
+
+  .form-grid { display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem; }
+  @media(max-width:600px){.form-grid{grid-template-columns:1fr;}}
+
+  label { display:block;font-size:0.78rem;font-weight:500;color:var(--muted);margin-bottom:0.4rem;text-transform:uppercase;letter-spacing:0.5px; }
+  textarea, input, select {
+    width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);
+    border-radius:10px;padding:0.75rem 1rem;color:var(--text);font-family:'Inter',sans-serif;
+    font-size:0.9rem;outline:none;transition:border-color 0.2s,box-shadow 0.2s;
+  }
+  textarea:focus, input:focus, select:focus {
+    border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,58,237,0.15);
+  }
+  textarea { min-height:110px;resize:vertical;line-height:1.6; }
+
+  .energy-pills { display:flex;gap:0.5rem;flex-wrap:wrap; }
+  .pill {
+    padding:0.4rem 1rem;border-radius:99px;border:1px solid var(--border);
+    font-size:0.8rem;cursor:pointer;transition:all 0.2s;background:transparent;color:var(--muted);
+  }
+  .pill:hover { border-color:var(--accent);color:var(--accent2); }
+  .pill.active { background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600; }
+
+  .cta-btn {
+    width:100%;padding:1rem;border-radius:12px;border:none;cursor:pointer;font-family:'Inter',sans-serif;
+    font-size:1rem;font-weight:700;letter-spacing:0.3px;
+    background:linear-gradient(135deg,#7c3aed,#06b6d4);color:#fff;
+    transition:all 0.3s;position:relative;overflow:hidden;margin-top:1.5rem;
+  }
+  .cta-btn:hover { transform:translateY(-2px);box-shadow:0 10px 30px rgba(124,58,237,0.4); }
+
+  #loader { display:none;text-align:center;padding:3rem; }
+  .thinking-dots { display:flex;justify-content:center;gap:0.4rem;margin-bottom:1rem; }
+  .dot {
+    width:10px;height:10px;border-radius:50%;background:var(--accent);
+    animation:bounce 1.2s ease-in-out infinite;
+  }
+  #loader p { color:var(--muted);font-size:0.9rem;animation:fadetext 2s infinite; }
+  @keyframes bounce{0%,80%,100%{transform:scale(0.8);opacity:0.5}40%{transform:scale(1.2);opacity:1}}
+
+  #results { display:none; }
+
+  .section-title {
+    font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;
+    color:var(--muted);margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem;
+  }
+  .section-title::after { content:'';flex:1;height:1px;background:var(--border); }
+
+  .priority-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:2rem; }
+  @media(max-width:600px){.priority-grid{grid-template-columns:1fr;}}
+
+  .priority-col {
+    background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.25rem;
+  }
+  .priority-col h3 { font-size:0.8rem;font-weight:700;text-transform:uppercase;margin-bottom:1rem; }
+  .priority-col.high h3 { color:var(--high); }
+  .priority-col.med h3 { color:var(--med); }
+  .priority-col.low h3 { color:var(--low); }
+
+  .task-chip {
+    background:rgba(255,255,255,0.04);border:1px solid var(--border);
+    border-radius:8px;padding:0.5rem 0.75rem;margin-bottom:0.5rem;
+    font-size:0.82rem;display:flex;align-items:center;gap:0.5rem;
+  }
+  .task-chip .dot-ind { width:6px;height:6px;border-radius:50%; }
+
+  .schedule-card {
+    background:var(--card);border:1px solid var(--border);border-radius:20px;
+    padding:1.5rem;margin-bottom:2rem;
+  }
+
+  .timeline { display:flex;flex-direction:column;position:relative; }
+  .timeline::before {
+    content:'';position:absolute;left:70px;top:0;bottom:0;width:2px;
+    background:linear-gradient(to bottom,var(--accent),transparent);
+  }
+  .tblock { display:flex;gap:1rem;position:relative;padding-bottom:0.75rem; }
+  .ttime { width:65px;text-align:right;font-size:0.75rem;color:var(--muted);padding-top:0.75rem; }
+  .tnode { width:12px;height:12px;border-radius:50%;margin-top:1rem;border:2px solid var(--bg);z-index:1; }
+  .tcontent { flex:1;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:12px;padding:0.75rem 1rem; }
+  .ttitle { font-size:0.9rem;font-weight:600; }
+  .tdesc { font-size:0.78rem;color:var(--muted); }
+
+  .suggestions-grid { display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:2rem; }
+  @media(max-width:600px){.suggestions-grid{grid-template-columns:1fr;}}
+  .suggestion-card { background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.1rem; }
+  .s-tip { font-size:0.88rem;font-weight:600;margin-bottom:0.25rem; }
+  .s-desc { font-size:0.78rem;color:var(--muted); }
+
+  .reset-btn {
+    display:flex;align-items:center;gap:0.5rem;background:transparent;
+    border:1px solid var(--border);border-radius:10px;padding:0.6rem 1.2rem;
+    color:var(--muted);cursor:pointer;font-size:0.85rem;margin-bottom:2rem;
+  }
+
+  .stats-bar { display:flex;gap:1.5rem;flex-wrap:wrap;margin-bottom:2rem; }
+  .stat { background:var(--card);border:1px solid var(--border);border-radius:12px;padding:0.75rem 1rem;flex:1; }
+  .stat-val { font-size:1.3rem;font-weight:800; }
+  .stat-lbl { font-size:0.7rem;color:var(--muted);text-transform:uppercase; }
+</style>
+</head>
+<body>
+<div class="bg-orbs">
+  <div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div>
+</div>
+
+<div class="wrapper">
+  <header>
+    <div class="badge">AI Productivity Agent</div>
+    <div class="logo">
+      <div class="logo-icon">🧠</div>
+      <div class="logo-text"><span>DayMind</span></div>
+    </div>
+    <p>Paste your messy task list. I'll prioritize, schedule, and optimize your entire day — instantly.</p>
+  </header>
+
+  <div class="input-card" id="input-section">
+    <h2>📋 What's on your plate today?</h2>
+    <div style="margin-bottom:1rem;">
+      <label>Your Tasks (messy is fine)</label>
+      <textarea id="tasks-input" placeholder="e.g. gym, finish project report, groceries, team meeting at 2pm, read 30 mins..."></textarea>
+    </div>
+    <div class="form-grid">
+      <div><label>Wake Time</label><input type="time" id="wake-time" value="07:00"></div>
+      <div><label>Specific Deadlines</label><input type="text" id="fixed-tasks" placeholder="e.g. Call at 10am"></div>
+    </div>
+    <div style="margin-bottom:0.5rem;">
+      <label>Energy Profile</label>
+      <div class="energy-pills">
+        <button class="pill active" onclick="selectPill(this,'morning')">🌅 Morning</button>
+        <button class="pill" onclick="selectPill(this,'afternoon')">☀️ Afternoon</button>
+        <button class="pill" onclick="selectPill(this,'night')">🌙 Night Owl</button>
+      </div>
+    </div>
+    <button class="cta-btn" onclick="generatePlan()">⚡ Generate My Optimized Day Plan</button>
+  </div>
+
+  <div id="loader"><p id="loader-text">Analyzing your tasks...</p></div>
+
+  <div id="results">
+    <button class="reset-btn" onclick="resetApp()">← Plan a New Day</button>
+    <div class="stats-bar" id="stats-bar"></div>
+    <div class="section-title">🎯 Priorities</div>
+    <div class="priority-grid">
+      <div class="priority-col high" id="high-tasks"><h3>🔴 High</h3></div>
+      <div class="priority-col med" id="med-tasks"><h3>🟡 Medium</h3></div>
+      <div class="priority-col low" id="low-tasks"><h3>🟢 Low</h3></div>
+    </div>
+    <div class="section-title">📅 Daily Schedule</div>
+    <div class="schedule-card"><div class="timeline" id="timeline"></div></div>
+    <div class="section-title">💡 Smart Suggestions</div>
+    <div class="suggestions-grid" id="suggestions-grid"></div>
+  </div>
+</div>
+
+<script>
+let selectedEnergy = 'morning';
+function selectPill(el, val) {
+  document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  selectedEnergy = val;
+}
+
+const KEYWORDS = {
+  high: ['meeting','interview','deadline','urgent','call','sync','submit'],
+  health: ['gym','workout','run','walk','meditate'],
+  learning: ['study','read','course','learn'],
+  personal: ['family','groceries','laundry','cook','clean','errands'],
+  break: ['break','lunch','rest','coffee'],
+};
+
+function classifyTask(task) {
+  const t = task.toLowerCase();
+  let type = 'work';
+  let priority = 'medium';
+  if (KEYWORDS.high.some(k => t.includes(k))) priority = 'high';
+  if (KEYWORDS.health.some(k => t.includes(k))) type = 'health';
+  else if (KEYWORDS.learning.some(k => t.includes(k))) type = 'learning';
+  else if (KEYWORDS.personal.some(k => t.includes(k))) priority = 'low';
+  return { task, type, priority };
+}
+
+async function generatePlan() {
+  const input = document.getElementById('tasks-input').value.trim();
+  if (!input) return;
+  document.getElementById('input-section').style.display = 'none';
+  document.getElementById('loader').style.display = 'block';
+  await new Promise(r => setTimeout(r, 2000));
+
+  const parts = input.split(/,|\n/).map(s => s.trim()).filter(s => s.length > 1);
+  const tasks = parts.map(classifyTask);
+  
+  // Render
+  ['high','med','low'].forEach(p => document.getElementById(p+'-tasks').innerHTML = `<h3>${p.toUpperCase()}</h3>`);
+  tasks.forEach(t => {
+    const el = document.getElementById((t.priority === 'medium' ? 'med' : t.priority)+'-tasks');
+    el.innerHTML += `<div class="task-chip">${t.task}</div>`;
+  });
+
+  document.getElementById('timeline').innerHTML = tasks.map((t,i) => `
+    <div class="tblock">
+      <div class="ttime">${07 + i}:00</div>
+      <div class="tnode"></div>
+      <div class="tcontent"><div class="ttitle">${t.task}</div><div class="tdesc">Optimized for ${selectedEnergy} peak.</div></div>
+    </div>`).join('');
+
+  document.getElementById('loader').style.display = 'none';
+  document.getElementById('results').style.display = 'block';
+}
+
+function resetApp() {
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('input-section').style.display = 'block';
+}
+</script>
+</body>
+</html>
